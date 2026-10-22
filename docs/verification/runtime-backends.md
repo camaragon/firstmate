@@ -2443,6 +2443,13 @@ A live injection through `bin/fm-supervise-daemon.sh`'s own `inject_msg` into a 
 
 `tests/fm-tmux-agent-liveness.test.sh` pins this with real processes and no Cursor installed: it asserts the cursor-anchored source is blind, that the composite still reads `empty` idle and `pending` with typed text, that an identical screen stays `unknown` when the pane is not Cursor, and that a stale Cursor screen over a dead shell never reads `empty`.
 
+On 2026-10-21 the same idle shape was captured again from cursor-agent 2026.10.19-6bbf2c4 on tmux.
+`#{cursor_y}` was still below the footer with `#{cursor_flag}` 0, and `fm_tmux_pane_is_cursor` still matched `~/.local/bin/cursor-agent`.
+The placeholder row had changed: `→ Add a follow-up` was one SGR 2 run on background `48;2;42;44;57`, with half-block rules above and below and no reverse-video cell.
+Ghost stripping emptied that row, and the empty-content guard treated any plain row longer than a lone glyph as `unknown`, so the composite stayed `unknown` and relaunch and exit refused.
+The plain row is still the anchored placeholder, so that guard now reads it `empty`.
+Bright text, including text typed as exactly `Add a follow-up`, is not stripped and stays `pending`.
+
 ### Busy state
 
 Cursor writes a per-conversation transcript at `<projects-root>/<workspace-slug>/agent-transcripts/<conversation-id>/<conversation-id>.jsonl`.
