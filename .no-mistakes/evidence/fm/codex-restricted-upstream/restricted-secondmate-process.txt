@@ -1,0 +1,4 @@
+pane pid 2052439
+    PID COMMAND
+2053391 codex --sandbox workspace-write --ask-for-approval on-request ⁣FIRSTMATE_OP: v1 launch-brief: charter: reply with the single word READY and stop.
+2053391 codex --sandbox workspace-write --ask-for-approval on-request ⁣FIRSTMATE_OP: v1 launch-brief: charter: reply with the single word READY and stop.

@@ -1,0 +1,14 @@
+config/codex-permission-mode: absent
+fm-gate-refuse: gate agent lifecycle permitted only against lab home /tmp/fm-lab.WWPZJQ
+●━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+●  WATCHER DOWN - SUPERVISION IS OFF
+●  1 task(s) in flight, but no watcher has a fresh beacon (last beat: never, grace 300s).
+●  Trust the emitted supervision protocol for this harness; do not use shell & for watcher repair.
+●  This is a supervision warning only; the guarded operation WILL still run.
+●  watcher supervision needs Stop-owned automatic recovery; inspect the hook registration and startup status before ending the turn.
+●━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+warning: secondmate smcodexbad sync skipped before launch: primary default-branch commit cannot be resolved
+spawned smcodexbad harness=codex kind=secondmate mode=secondmate yolo=off window=primary:fm-smcodexbad worktree=/tmp/fm-lab-sm.1EZaTB
+rc=0
+    PID COMMAND
+2063381 codex --dangerously-bypass-approvals-and-sandbox ⁣FIRSTMATE_OP: v1 launch-brief: charter: reply READY.

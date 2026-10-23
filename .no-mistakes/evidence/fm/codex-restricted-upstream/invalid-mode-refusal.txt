@@ -1,0 +1,8 @@
+$ cat config/codex-permission-mode
+auto
+$ bin/fm-spawn.sh smcodexbad <sm-home> --secondmate --harness codex
+error: config/codex-permission-mode must contain bypass or restricted
+rc=1
+--- windows after:
+primary:0: bash* (1 panes) [200x50] 
+--- state diff (empty = no mutation):
