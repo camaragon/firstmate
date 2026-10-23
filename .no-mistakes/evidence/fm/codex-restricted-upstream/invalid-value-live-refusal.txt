@@ -1,0 +1,10 @@
+error: config/codex-permission-mode must contain bypass or restricted
+SPAWN_RC=1
+bash-5.3$ bin/fm-spawn.sh labb1 --relaunch; echo RELAUNCH_RC=$?
+error: config/codex-permission-mode must contain bypass or restricted
+RELAUNCH_RC=1
+bash-5.3$
+state dir unchanged after refused spawn; labb1.meta unchanged after refused relaunch: yes
+primary:0: bash* (1 panes) [220x50] 
+primary:1: fm-labr1 (1 panes) [220x50] 
+primary:2: fm-labb1 (1 panes) [220x50] 

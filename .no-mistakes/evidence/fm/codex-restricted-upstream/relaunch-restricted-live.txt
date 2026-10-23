@@ -1,0 +1,10 @@
+# labb1 was first spawned with no codex-permission-mode (bypass, see absent-default-live-spawn.txt)
+# config/codex-permission-mode now = restricted; ran: bin/fm-spawn.sh labb1 --relaunch
+fm-gate-refuse: gate agent lifecycle permitted only against lab home /tmp/fm-lab.0WMDla
+spawned labb1 harness=codex kind=scout window=primary:fm-labb1 worktree=/home/camaragon/.treehouse/labproj-f7102c/2/labproj
+# relaunched live codex argv (brief truncated):
+codex --sandbox workspace-write --ask-for-approval on-request --disable hooks -c notify=["bash","-c","touch '/tmp/fm-lab.0WMDla/state/labb1.turn-ended'"] ⁣FIRSTMATE_OP: v
+# task record after relaunch:
+harness=codex
+approval_mode=restricted
+kind=scout
