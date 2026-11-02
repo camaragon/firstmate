@@ -1,0 +1,24 @@
+$ fm-spawn.sh hscout /tmp/fm-lab.Q1v4lX/projects/demo --scout --harness hermes --hermes-profile worker --backend herdr
+error: hermes is verified on the tmux backend only; backend=herdr is unsupported
+exit=1
+
+$ fm-spawn.sh hscout /tmp/fm-lab.Q1v4lX/projects/demo --scout --harness hermes --hermes-profile worker --model gpt-5
+error: Hermes model selection belongs to the selected profile; omit --model or use default
+exit=1
+
+$ fm-spawn.sh hscout /tmp/fm-lab.Q1v4lX/projects/demo --scout --harness hermes --hermes-profile Bad;Name
+error: --hermes-profile must be a lowercase Hermes profile name (1-64 letters, digits, underscores or hyphens)
+exit=1
+
+$ fm-spawn.sh hscout /tmp/fm-lab.Q1v4lX/projects/demo --scout --harness claude --hermes-profile worker
+error: --hermes-profile requires --harness hermes
+exit=1
+
+$ fm-spawn.sh sm1 --harness hermes --secondmate
+error: hermes is a verified crewmate/scout adapter only and cannot run a secondmate; it has no primary supervision protocol. Select a harness verified for secondmates.
+exit=1
+
+$ fm-spawn.sh sm1 --harness hermes --hermes-profile worker --secondmate
+error: --hermes-profile is for crewmate/scout launches, never a secondmate
+exit=1
+

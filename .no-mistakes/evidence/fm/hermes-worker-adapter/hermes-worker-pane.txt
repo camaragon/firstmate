@@ -1,0 +1,50 @@
+   # Firstmate instruction inbox                                                                                                                                                                       │
+   Firstmate steers you through durable message files in '/tmp/fm-lab.Q1v4lX/state/hscout.inbox'.                                                                                                      │
+   When a terminal message says an instruction is waiting there - and at any natural checkpoint when you are unsure - list them with `find '/tmp/fm-lab.Q1v4lX/state/hscout.inbox' -maxdepth 1 -name   │
+   '*.msg' 2>/dev/null | sort -V`, read the complete contents of each record (including its final line even when it is not newline-terminated) and act on each message in numeric order, then          │
+   acknowledge each handled message by moving it: `mv '/tmp/fm-lab.Q1v4lX/state/hscout.inbox'/NNN.msg '/tmp/fm-lab.Q1v4lX/state/hscout.inbox'/handled/`.                                               │
+   Prefer the format-aware `fm_task_inbox_body` reader from `bin/fm-task-inbox-lib.sh` when it is available. If you read manually, a header line `body-terminator=1` means the writer added exactly    │
+   one synthetic final newline to terminate the record file; that marked newline is not part of the logical message body, so remove only it and preserve any intentional trailing newlines. Legacy     │
+   records without that marker may end without a newline; read them through the file end.                                                                                                              │
+   The move IS the acknowledgement: without it firstmate rings again and eventually treats you as stuck. An empty or absent inbox needs no action.                                                     │
+                                                                                                                                                                                                       │
+   # Definition of done                                                                                                                                                                                │
+   Write your findings to `/tmp/fm-lab.Q1v4lX/data/hscout/report.md`.                                                                                                                                  │
+   The report must stand alone: what you did, what you found, the evidence (commands run, output, file:line references), and what you recommend.                                                       │
+   If your deliverable is a visual artifact the captain will review and iterate on, use the lavish-axi rule: arm your board with bin/fm-procevent-lavish.sh arm <artifact.html> --for <task-id>;       │
+   never run lavish-axi poll yourself. Re-arm with the reply after each nonterminal round to acknowledge it, route the board feedback through your steering inbox, write needs-decision                │
+   [key=board-review] with the live board URL when the captain owes a decision, and stop at session_ended or an empty End without re-arming - acknowledge that final round with bin/fm-procevent.sh    │
+   handled <source-id> <sequence> to conclude and retire your board.                                                                                                                                   │
+   Before reporting done, read and follow `/home/camaragon/.no-mistakes/worktrees/4d25c6e42ce7/01M6DBJ9WD9WJF3HHX3D3KDK0X/.agents/skills/captain-hold-lifecycle/SKILL.md` and pass its shared          │
+   completion gate for the report and any visual review.                                                                                                                                               │
+   Only when the reviewed inventory is empty, run `FM_HOME='/tmp/fm-lab.Q1v4lX' bash '/home/camaragon/.no-mistakes/worktrees/4d25c6e42ce7/01M6DBJ9WD9WJF3HHX3D3KDK0X/bin/fm-captain-hold.sh' complete  │
+    'hscout' --none`.                                                                                                                                                                                  │
+   This exception permits only that command, not direct metadata edits, another task, or any backlog write.                                                                                            │
+   If any captain call remains, ask firstmate to register the inventory and attest completion before you report done.                                                                                  │
+   If the command refuses, report the refusal to firstmate and stop rather than bypassing the completion gate.                                                                                         │
+   When the report is complete, append `done [at=<epoch>]: {one-line conclusion}` to the status file and stop.                                                                                         │
+   If your findings reveal work that should ship (e.g. you reproduced a bug and the fix is clear), say so in the report; firstmate may promote this task in place, and you would then receive          │
+   mode-specific ship instructions as a follow-up message.                                                                                                                                             │
+                                                                                                                                                                                                       │
+ └─ ▾ Tool calls (2)                                                                                                                                                                                   │
+   ├─ ● Terminal("python3 -c 'print(12345 + 67890)' + 1 command") (0.1s)                                                                                                                               │
+   └─ ● Read File("SKILL.md") (0.0s)                                                                                                                                                                   │
+                                                                                                                                                                                                       │
+ └─ ▾ Tool calls (1)                                                                                                                                                                                   ┃
+   └─ ● Write File("/tmp/fm-lab.Q1v4lX/data/hscout/report.md") (0.1s)                                                                                                                                  ┃
+                                                                                                                                                                                                       ┃
+ └─ Response                                                                                                                                                                                           ┃
+                                                                                                                                                                                                       ┃
+ ┊    a//tmp/fm-lab.Q1v4lX/data/hscout/report.md → b//tmp/fm-lab.Q1v4lX/data/hscout/report.md                                                                                                          ┃
+      @@ -0,0 +1 @@                                                                                                                                                                                    ┃
+      +80235                                                                                                                                                                                           ┃
+                                                                                                                                                                                                       ┃
+ └─ ▾ Tool calls (2)                                                                                                                                                                                   ┃
+   ├─ ● Terminal("FM_HOME='/tmp/fm-lab.Q1v4lX' bash '/home/camaragon/.no-mistakes…") (0.4s)                                                                                                            ┃
+   └─ ● Terminal("stamp=$(date +%s) + 4 commands") (0.1s)                                                                                                                                              ┃
+                                                                                                                                                                                                       ┃
+ ┊  Wrote 80235 to /tmp/fm-lab.Q1v4lX/data/hscout/report.md. Completion gate passed and the done status was appended and verified.                                                                     ┃
+
+
+ ─ ready │ gpt 6 astra │ 18.5k/272k │ [█░░░░░░░░░] 7% │ 35s │ ✓ 4s │ ◎ 85% │ ◷ 4.0s │ ↑ 18 t/s │ voice off │ 1 session                                 ─  Acknowledge crewmate role and steering inbox
+ worker ❯

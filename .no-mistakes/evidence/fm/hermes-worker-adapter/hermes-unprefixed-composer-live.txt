@@ -1,0 +1,45 @@
+# Live: real 'hermes chat --tui' in throwaway default root (HERMES_HOME=/tmp/fm-hermes-probe, no -p), private tmux server
+== idle default-profile TUI under native 'ready' status rule
+ ─ ready │ glm 5.3 │ 8s │ voice off │ 1 session                                                                                  ─ …/01M6DBJ9WD9WJF3HHX3D3KDK0X
+ ❯ Try "explain this codebase"
+identity=hermes
+generic_cursor_verdict=pending
+fm_tmux_composer_state=pending
+prompt_row:  ❯ Try "explain this codebase"
+== typed bright draft
+identity=hermes
+generic_cursor_verdict=pending
+fm_tmux_composer_state=pending
+prompt_row:  ❯ real draft text
+== draft cleared
+identity=hermes
+generic_cursor_verdict=pending
+fm_tmux_composer_state=pending
+prompt_row:  ❯ Try "explain this codebase"
+
+== fresh-session idle placeholder, profile-prefixed (hermes -p worker chat --tui) for comparison
+ worker ❯ Ask me anything…
+identity=hermes
+fm_tmux_composer_state=pending
+
+== submitted harmless prompt on unprefixed default-profile TUI; per-second composer reads (busy hint row, then post-turn)
+06:11:33 fm_tmux_composer_state=empty | ❯ Ctrl+C to interrupt…
+06:11:34 fm_tmux_composer_state=empty | ❯
+06:11:36 fm_tmux_composer_state=empty | ❯
+06:11:37 fm_tmux_composer_state=empty | ❯
+== post-turn idle (after native turn end)
+ ─ ready │ glm 5.3 │ 1m 4s │ ✓ 13s │ voice off │ 1 session                                                    ─  Without
+ ❯
+identity=hermes
+generic_cursor_verdict=empty
+fm_tmux_composer_state=empty
+prompt_row:  ❯
+
+== second submission: reads taken while the native busy hint is on screen
+06:11:58.848 generic_cursor_verdict=pending fm_tmux_composer_state=empty  | ❯ Ctrl+C to interrupt…
+06:11:59.374 generic_cursor_verdict=pending fm_tmux_composer_state=empty  | ❯ Ctrl+C to interrupt…
+== after turn, user types the hint words as a bright draft
+identity=hermes
+generic_cursor_verdict=pending
+fm_tmux_composer_state=pending
+prompt_row:  ❯ Ctrl+C to interrupt…

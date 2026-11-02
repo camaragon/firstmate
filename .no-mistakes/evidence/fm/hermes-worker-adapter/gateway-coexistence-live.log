@@ -1,0 +1,19 @@
+2026-11-02T05:54:58Z
+FM_TEST_BEGIN 2026-11-02T05:54:58Z tests/fm-hermes-gateway-coexistence-live-e2e.test.sh family=live-harness-optin expected_gate_skip=live-capability
+idle gateway before: {"pid":462634,"gateway_state":"running","active_agents":0,"active_work":null,"updated_at":"2026-11-02T05:55:00.463561+00:00","session_store":{"status":"ok"}}
+ok - real idle profile gateway accepted by the read-only preflight
+ok - hermes Hermes Agent v0.21.7 (2026.9.24) · stable · local 71d34bad1045: native first-run offer recognized, No thanks confirmed, TUI ready and decline persisted
+ok - hermes Hermes Agent v0.21.7 (2026.9.24) · stable · local 71d34bad1045: interactive brief, native profile, tools, status, identity, busy and turn-end
+ok - hermes Hermes Agent v0.21.7 (2026.9.24) · stable · local 71d34bad1045: real steering inbox read and acknowledgement
+ok - hermes Hermes Agent v0.21.7 (2026.9.24) · stable · local 71d34bad1045: idle interrupt preserves process; double-Escape cancels a turn and native end settles
+ok - hermes Hermes Agent v0.21.7 (2026.9.24) · stable · local 71d34bad1045: /quit and deterministic relaunch retain profile and task endpoint
+idle gateway after: {"pid":462634,"gateway_state":"running","active_agents":0,"active_work":null,"updated_at":"2026-11-02T05:58:02.326838+00:00","session_store":{"status":"ok"}}
+native gateway status: ✓ Gateway is running (PID: 462634)
+session store: integrity ok, 9 prior sessions and their messages retained, 2 new worker sessions; memory unchanged
+ok - Hermes Agent v0.21.7 (2026.9.24) · stable · local 71d34bad1045: TUI worker completed beside a real idle gateway; gateway, session store and memory intact
+FM_TEST_END 2026-11-02T05:58:05Z tests/fm-hermes-gateway-coexistence-live-e2e.test.sh exit=0 duration_ms=186782 gate_skip=false
+FM_TEST_SUMMARY total=1 failed=0 skipped_gate=0 duration_ms=186876
+FM_TEST_SUMMARY_FAMILY family=live-harness-optin count=1 duration_ms=186782 failed=0
+FM_TEST_SLOWEST rank=1 script=tests/fm-hermes-gateway-coexistence-live-e2e.test.sh duration_ms=186782
+exit=0
+2026-11-02T05:58:05Z

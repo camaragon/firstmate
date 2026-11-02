@@ -1,0 +1,16 @@
+# gateway_state.json: running, active_agents=1 (mid-turn), live pid 532468
+●━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+error: Hermes profile 'busy': its live gateway is not idle-serving (state 'running'); choose a separate profile. No gateway was changed.
+exit=1
+# gateway_state.json: draining, live pid
+WARNING: watcher still down (same stale episode; last beat: never, grace 300s) - full banner already printed this episode.
+error: Hermes profile 'busy': its live gateway is not idle-serving (state 'draining'); choose a separate profile. No gateway was changed.
+exit=1
+# gateway_state.json: malformed
+WARNING: watcher still down (same stale episode; last beat: never, grace 300s) - full banner already printed this episode.
+error: Hermes profile 'busy': gateway state cannot prove the gateway stopped; choose a separate profile. No gateway was changed.
+exit=1
+# default-root gateway.pid live (named profile possibly multiplexed)
+WARNING: watcher still down (same stale episode; last beat: never, grace 300s) - full banner already printed this episode.
+error: Hermes profile 'busy': a default-root gateway is live and may serve this profile; choose a separate profile. No gateway was changed.
+exit=1

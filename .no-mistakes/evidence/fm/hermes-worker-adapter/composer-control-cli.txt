@@ -1,0 +1,15 @@
+# pane composer after typing a draft:
+ worker ❯ Ctrl+C to interrupt draft
+# composer state: pending
+$ fm-control.sh hscout interrupt   (with unsent draft)
+error: Hermes double-Escape clears an unsent draft; interrupt requires a proven empty composer
+exit=
+# draft preserved:
+ worker ❯ Ctrl+C to interrupt draft
+# composer state after clearing: empty
+$ fm-control.sh hscout interrupt   (idle, empty composer)
+interrupt-delivered hscout harness=hermes backend=tmux verified=agent-alive cancel=unconfirmed
+exit=
+# pane still alive, pid 525751 -> 525751 dead=0 cmd=python3
+ ─ ready │ gpt 6 astra │ 19.5k/272k │ [█░░░░░░░░░] 7% │ 2m 2s │ ✓ 26s │ ◎ 92% │ ◷ 4.9s │ ↑ 19 t/s │ voice off │ 1 session                              ─  Acknowledge crewmate role and steering inbox
+ worker ❯
