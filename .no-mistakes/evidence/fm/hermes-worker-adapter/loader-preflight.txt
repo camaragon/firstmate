@@ -1,0 +1,19 @@
+# Loader preflight against a disposable copy of bin/
+missing helper | backend=tmux | rc=1 
+missing helper | backend=herdr | rc=1 
+missing helper | backend=rex | rc=1 
+missing helper | backend=tern | rc=1 
+missing helper | backend=hc | rc=1 
+missing helper | backend=zellij | rc=0 
+unreadable helper | backend=tmux | rc=1 
+unreadable helper | backend=herdr | rc=1 
+unreadable helper | backend=rex | rc=1 
+unreadable helper | backend=tern | rc=1 
+unreadable helper | backend=hc | rc=1 
+unreadable helper | backend=zellij | rc=0 
+restored helper | backend=tmux | rc=0 
+restored helper | backend=herdr | rc=0 
+restored helper | backend=rex | rc=0 
+restored helper | backend=tern | rc=0 
+restored helper | backend=hc | rc=0 
+restored helper | backend=zellij | rc=0 

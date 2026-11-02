@@ -1,0 +1,15 @@
+# Live foreground attribution on a disposable tmux socket (real python3 -I -c bootstrap + same-group node child; neither named hermes)
+--- window herm: pane_current_command=python3
+    PID    PGID COMMAND         COMMAND
+3184969 3184969 python3         python3 -I -c import subprocess,sys; subprocess.run(["node","--expose-gc",sys.argv[1]]) <lab>/fake app/ui-tui/dist/entry.js
+3184983 3184969 MainThread      node --expose-gc <lab>/fake app/ui-tui/dist/entry.js
+fm_backend_agent_state tmux lab:herm => alive
+--- window nodectl: pane_current_command=python3
+    PID    PGID COMMAND         COMMAND
+3184971 3184971 python3         python3 -I -c import subprocess,sys; subprocess.run(["node","--expose-gc",sys.argv[1]]) <lab>/other/server.js
+3184996 3184971 MainThread      node --expose-gc <lab>/other/server.js
+fm_backend_agent_state tmux lab:nodectl => ambiguous
+--- window shell: pane_current_command=bash
+    PID    PGID COMMAND         COMMAND
+3184973 3184973 bash            -bash
+fm_backend_agent_state tmux lab:shell => dead

@@ -1,0 +1,7 @@
+1..4
+ok - fm_backend_source: missing adapter fails before lifecycle continuation
+ok - fm_backend_source: unreadable adapter fails before lifecycle continuation
+ok - fm_backend_source: missing Hermes helper refuses every dependent backend before sourcing
+ok - fm_backend_source: unreadable Hermes helper refuses every dependent backend before sourcing
+FM_TEST_COMPLETE
+EXIT=0

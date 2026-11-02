@@ -1,0 +1,8 @@
+native gateway runtime lock: held
+native TUI beside held gateway runtime lock: ready
+native TUI foreground liveness: alive
+two native session-store writers: distinct sessions retained
+two native memory add writers: both entries retained
+native gateway runtime lock: released
+ok - Hermes version unknown: native lock/TUI coexistence and distinct session/memory writers
+EXIT=0
