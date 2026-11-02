@@ -1,24 +1,24 @@
-$ fm-spawn.sh t-sm1 /tmp/fm-proj.5t41YR --mode local-only --yolo off --harness hermes --secondmate
-fm-gate-refuse: gate agent lifecycle permitted only against lab home /tmp/fm-lab.ChnRj5
+$ fm-spawn.sh t-sm1 <project> --mode local-only --yolo off --harness hermes --secondmate
+fm-gate-refuse: gate agent lifecycle permitted only against lab home <lab-home>
 error: --mode applies only to ship spawns; a scout delivers a report and a secondmate records its own fixed posture
 exit=1
-$ fm-spawn.sh t-be1 /tmp/fm-proj.5t41YR --scout --harness hermes --hermes-profile worker --backend herdr
-fm-gate-refuse: gate agent lifecycle permitted only against lab home /tmp/fm-lab.ChnRj5
+$ fm-spawn.sh t-be1 <project> --scout --harness hermes --hermes-profile worker --backend herdr
+fm-gate-refuse: gate agent lifecycle permitted only against lab home <lab-home>
 error: hermes is verified on the tmux backend only; backend=herdr is unsupported
 exit=1
-$ fm-spawn.sh t-bad1 /tmp/fm-proj.5t41YR --scout --harness hermes --hermes-profile Bad/../x
-fm-gate-refuse: gate agent lifecycle permitted only against lab home /tmp/fm-lab.ChnRj5
+$ fm-spawn.sh t-bad1 <project> --scout --harness hermes --hermes-profile Bad/../x
+fm-gate-refuse: gate agent lifecycle permitted only against lab home <lab-home>
 error: --hermes-profile must be a lowercase Hermes profile name (1-64 letters, digits, underscores or hyphens)
 exit=1
-$ fm-spawn.sh t-miss1 /tmp/fm-proj.5t41YR --scout --harness hermes --hermes-profile nosuchprofile
-fm-gate-refuse: gate agent lifecycle permitted only against lab home /tmp/fm-lab.ChnRj5
+$ fm-spawn.sh t-miss1 <project> --scout --harness hermes --hermes-profile nosuchprofile
+fm-gate-refuse: gate agent lifecycle permitted only against lab home <lab-home>
 Error: Profile 'nosuchprofile' does not exist. Create it with: hermes profile create nosuchprofile
 exit=1
-$ fm-spawn.sh t-sm2 /tmp/fm-proj.PivKJw --secondmate --harness hermes
-fm-gate-refuse: gate agent lifecycle permitted only against lab home /tmp/fm-lab.AeVjr1
+$ fm-spawn.sh t-sm2 <project> --secondmate --harness hermes
+fm-gate-refuse: gate agent lifecycle permitted only against lab home <lab-home>
 error: hermes is a verified crewmate/scout adapter only and cannot run a secondmate; it has no primary supervision protocol. Select a harness verified for secondmates.
 exit=1
-$ fm-spawn.sh t-sm3 /tmp/fm-proj.PivKJw --secondmate --harness claude --hermes-profile worker
-fm-gate-refuse: gate agent lifecycle permitted only against lab home /tmp/fm-lab.AeVjr1
+$ fm-spawn.sh t-sm3 <project> --secondmate --harness claude --hermes-profile worker
+fm-gate-refuse: gate agent lifecycle permitted only against lab home <lab-home>
 error: --hermes-profile is for crewmate/scout launches, never a secondmate
 exit=1

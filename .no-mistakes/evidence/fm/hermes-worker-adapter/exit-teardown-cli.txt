@@ -1,13 +1,13 @@
 $ fm-control.sh hscout exit
-stopped hscout harness=hermes backend=tmux endpoint=primary:fm-hscout worktree=/tmp/fm-lab.Q1v4lX/trees/.treehouse/demo-6cbefe/1/demo
+stopped hscout harness=hermes backend=tmux endpoint=primary:fm-hscout worktree=<lab-home>/trees/.treehouse/demo-6cbefe/1/demo
 Tokens:         236350 (in 19954, out 1100, cache 215296, reasoning 0)
-camaragon@beachhouse:/tmp/fm-lab.Q1v4lX/trees/.treehouse/demo-6cbefe/1/demo$
+contributor@host:<lab-home>/trees/.treehouse/demo-6cbefe/1/demo$
 $ fm-teardown.sh hscout
 Run "treehouse update" to update
 
 🌳 Worktree returned to pool.
-teardown hscout complete (window primary:fm-hscout, worktree /tmp/fm-lab.Q1v4lX/trees/.treehouse/demo-6cbefe/1/demo)
-Backlog: hscout just finished (this home keeps no markdown backlog at /tmp/fm-lab.Q1v4lX/data/backlog.md). Update /tmp/fm-lab.Q1v4lX/data/backlog.md - move hscout to Done, keep Done to the 10 most recent, then re-scan Queued and dispatch only work whose blockers are gone and date is due.
+teardown hscout complete (window primary:fm-hscout, worktree <lab-home>/trees/.treehouse/demo-6cbefe/1/demo)
+Backlog: hscout just finished (this home keeps no markdown backlog at <lab-home>/data/backlog.md). Update <lab-home>/data/backlog.md - move hscout to Done, keep Done to the 10 most recent, then re-scan Queued and dispatch only work whose blockers are gone and date is due.
 # windows after teardown:
 1: bash#* (1 panes) [200x50] [layout ac9d,200x50,0,0,0] @0 (active)
 # state files left for hscout:

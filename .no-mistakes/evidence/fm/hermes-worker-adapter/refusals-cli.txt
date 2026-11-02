@@ -1,16 +1,16 @@
-$ fm-spawn.sh hscout /tmp/fm-lab.Q1v4lX/projects/demo --scout --harness hermes --hermes-profile worker --backend herdr
+$ fm-spawn.sh hscout <lab-home>/projects/demo --scout --harness hermes --hermes-profile worker --backend herdr
 error: hermes is verified on the tmux backend only; backend=herdr is unsupported
 exit=1
 
-$ fm-spawn.sh hscout /tmp/fm-lab.Q1v4lX/projects/demo --scout --harness hermes --hermes-profile worker --model gpt-5
+$ fm-spawn.sh hscout <lab-home>/projects/demo --scout --harness hermes --hermes-profile worker --model gpt-5
 error: Hermes model selection belongs to the selected profile; omit --model or use default
 exit=1
 
-$ fm-spawn.sh hscout /tmp/fm-lab.Q1v4lX/projects/demo --scout --harness hermes --hermes-profile Bad;Name
+$ fm-spawn.sh hscout <lab-home>/projects/demo --scout --harness hermes --hermes-profile Bad;Name
 error: --hermes-profile must be a lowercase Hermes profile name (1-64 letters, digits, underscores or hyphens)
 exit=1
 
-$ fm-spawn.sh hscout /tmp/fm-lab.Q1v4lX/projects/demo --scout --harness claude --hermes-profile worker
+$ fm-spawn.sh hscout <lab-home>/projects/demo --scout --harness claude --hermes-profile worker
 error: --hermes-profile requires --harness hermes
 exit=1
 

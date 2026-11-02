@@ -1,6 +1,6 @@
-# Live: real 'hermes chat --tui' in throwaway default root (HERMES_HOME=/tmp/fm-hermes-probe, no -p), private tmux server
+# Live: real 'hermes chat --tui' in throwaway default root (HERMES_HOME=<throwaway-root>, no -p), private tmux server
 == idle default-profile TUI under native 'ready' status rule
- ─ ready │ glm 5.3 │ 8s │ voice off │ 1 session                                                                                  ─ …/01M6DBJ9WD9WJF3HHX3D3KDK0X
+ ─ ready │ <profile-model> │ 8s │ voice off │ 1 session                                                                                  ─ …/01M6DBJ9WD9WJF3HHX3D3KDK0X
  ❯ Try "explain this codebase"
 identity=hermes
 generic_cursor_verdict=pending
@@ -28,7 +28,7 @@ fm_tmux_composer_state=pending
 06:11:36 fm_tmux_composer_state=empty | ❯
 06:11:37 fm_tmux_composer_state=empty | ❯
 == post-turn idle (after native turn end)
- ─ ready │ glm 5.3 │ 1m 4s │ ✓ 13s │ voice off │ 1 session                                                    ─  Without
+ ─ ready │ <profile-model> │ 1m 4s │ ✓ 13s │ voice off │ 1 session                                                    ─  Without
  ❯
 identity=hermes
 generic_cursor_verdict=empty
