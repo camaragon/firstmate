@@ -61,6 +61,7 @@ Full detail on every feature lives in [docs/architecture.md](docs/architecture.m
 
 - A verified primary agent harness: Claude Code, Grok, Pi, `pi-signed`, Oh My Pi (`omp`), Codex, OpenCode, Cursor Agent CLI, or Antigravity CLI (`agy`).
 - Git and the GitHub CLI, authenticated through `gh auth login`.
+- Perl with its core `JSON::PP` module, which some distributions package separately from `perl` (for example as `perl-JSON-PP`).
 - The CLI and dependencies for your selected runtime backend; tmux is the reference default.
 
 The first mate detects supported missing or outdated tools and offers their install or upgrade after you approve.

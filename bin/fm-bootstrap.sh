@@ -59,6 +59,10 @@
 #          upgrade command, which runs no first-install-only step such as
 #          `setup hooks` or a `curl | sh` installer. MISSING stays for absent
 #          tools only.
+#          perl is a required tool, and its JSON::PP module is checked with it:
+#          an absent module reports MISSING_MANUAL for perl-JSON-PP, because
+#          the module ships inside perl on some platforms and as a separate
+#          package on others, so there is no one install command to offer.
 #          treehouse is OUTDATED when its installed version lacks
 #          "treehouse get --lease" support.
 #          no-mistakes is OUTDATED when its installed version is older than
@@ -863,7 +867,7 @@ secondmate_handoff_detect() {
 
 install_cmd() {
   case "$1" in
-    tmux|node|git|gh|curl|jq|orca|zellij) echo "brew install $1  # or the platform's package manager" ;;
+    tmux|node|git|gh|curl|jq|perl|orca|zellij) echo "brew install $1  # or the platform's package manager" ;;
     cmux) echo "brew install --cask cmux  # or see https://cmux.com" ;;
     hc) echo "bin/fm-install-hc.sh <dir> && add <dir> to PATH  # or see docs/hc-backend.md" ;;
     treehouse) echo "curl -fsSL https://kunchenguid.github.io/treehouse/install.sh | sh" ;;
@@ -893,6 +897,7 @@ manual_install_url() {
     paseo) echo "https://paseo.sh" ;;
     rex) echo "https://www.superlogical.com/rex" ;;
     tern) echo "https://stencil.so/tern" ;;
+    perl-JSON-PP) echo "https://metacpan.org/pod/JSON::PP" ;;
     cursor-agent) echo "https://cursor.com/cli" ;;
     *) return 1 ;;
   esac
@@ -1531,6 +1536,19 @@ detect_local_tools() {
   for t in $COMMON_TOOLS; do
     command -v "$t" >/dev/null || missing_tool_diagnostic "$t"
   done
+  # Perl's JSON::PP decodes the JSON-quoted fields that `tasks-axi show` prints
+  # (the backlog-transition gate behind spawn and teardown, captain holds, and
+  # hold reasons) and the Lavish result files. It is a Perl core module that
+  # some distributions package separately from perl itself, so a host without
+  # it is told once here instead of failing at its first dispatch or captain
+  # hold, where the swallowed decode surfaces as an unrelated-looking error.
+  # The module has no single install command across package managers, so it is
+  # reported as a manual install with the module's own page as instructions.
+  if ! command -v perl >/dev/null 2>&1; then
+    missing_tool_diagnostic perl
+  elif ! perl -MJSON::PP -e 1 >/dev/null 2>&1; then
+    echo "MISSING_MANUAL: perl-JSON-PP (instructions: $(manual_install_url perl-JSON-PP))"
+  fi
   # The treehouse lease-support upgrade check is only relevant when the resolved
   # backend actually requires treehouse (every backend except orca, which owns its
   # own worktrees); an orca home must not be told to upgrade a provider it never uses.

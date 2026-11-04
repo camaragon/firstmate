@@ -830,6 +830,62 @@ ROWS
   pass "bootstrap: JSON-emitting backends require jq (their genuine dep), never tmux"
 }
 
+test_perl_json_pp_is_required() {
+  local case_dir fakebin real_perl out base
+  # The backlog-transition gate, captain holds, and the Lavish result decoder
+  # decode tasks-axi show fields through perl -MJSON::PP, and the module is a
+  # separate package on some distributions. A host missing it must hear so at
+  # startup, as a manual install naming the module, and a host missing perl
+  # itself must get the ordinary MISSING line; both lines stay apart.
+  real_perl=$(PATH="$BASE_PATH" command -v perl) \
+    || fail "this suite needs a real perl in BASE_PATH to build the module-less fixture"
+
+  case_dir="$TMP_ROOT/perl-json-pp-present"
+  mkdir -p "$case_dir/home/config"
+  printf '%s\n' manual > "$case_dir/home/config/backlog-backend"
+  fakebin=$(make_fake_toolchain "$case_dir")
+  out=$(PATH="$fakebin:$BASE_PATH" FM_HOME="$case_dir/home" FM_ROOT_OVERRIDE="$case_dir/home" \
+    FM_FAKE_TREEHOUSE_LEASE_HELP=1 "$ROOT/bin/fm-bootstrap.sh")
+  assert_not_contains "$out" "perl" "a perl with JSON::PP must stay silent"
+
+  # A perl whose @INC lacks the module: every other perl use is answered by the
+  # real interpreter, so only the module probe differs from the present case.
+  case_dir="$TMP_ROOT/perl-json-pp-absent"
+  mkdir -p "$case_dir/home/config"
+  printf '%s\n' manual > "$case_dir/home/config/backlog-backend"
+  fakebin=$(make_fake_toolchain "$case_dir")
+  cat > "$fakebin/perl" <<SH
+#!/usr/bin/env bash
+for arg in "\$@"; do
+  if [ "\$arg" = -MJSON::PP ]; then
+    echo "Can't locate JSON/PP.pm in @INC (you may need to install the JSON::PP module)" >&2
+    exit 2
+  fi
+done
+exec '$real_perl' "\$@"
+SH
+  chmod +x "$fakebin/perl"
+  out=$(PATH="$fakebin:$BASE_PATH" FM_HOME="$case_dir/home" FM_ROOT_OVERRIDE="$case_dir/home" \
+    FM_FAKE_TREEHOUSE_LEASE_HELP=1 "$ROOT/bin/fm-bootstrap.sh")
+  printf '%s\n' "$out" | grep -Fx "MISSING_MANUAL: perl-JSON-PP (instructions: https://metacpan.org/pod/JSON::PP)" >/dev/null \
+    || fail "a perl without JSON::PP must report the module as a manual install (got: $out)"
+  assert_not_contains "$out" "MISSING: perl" "a present perl must not be reported absent"
+
+  # No perl at all: the ordinary MISSING line with an install command, and no
+  # module line, because the module cannot be probed without the interpreter.
+  case_dir="$TMP_ROOT/perl-absent"
+  mkdir -p "$case_dir/home/config"
+  printf '%s\n' manual > "$case_dir/home/config/backlog-backend"
+  fakebin=$(make_fake_toolchain "$case_dir")
+  base=$(fm_test_base_path_sans "$BASE_PATH" perl)
+  out=$(PATH="$fakebin:$base" FM_HOME="$case_dir/home" FM_ROOT_OVERRIDE="$case_dir/home" \
+    FM_FAKE_TREEHOUSE_LEASE_HELP=1 "$ROOT/bin/fm-bootstrap.sh")
+  printf '%s\n' "$out" | grep -Fx "MISSING: perl (install: brew install perl  # or the platform's package manager)" >/dev/null \
+    || fail "an absent perl must report the ordinary install line (got: $out)"
+  assert_not_contains "$out" "perl-JSON-PP" "an absent perl must not also report its module"
+  pass "bootstrap: perl is required and a perl without JSON::PP reports the module as a manual install"
+}
+
 test_treehouse_lease_check_follows_resolved_backend() {
   local case_dir fakebin out
   # A treehouse that lacks durable --lease support is only a problem for a backend
@@ -1554,6 +1610,7 @@ test_herdr_install_requires_manual_action
 test_cmux_bundled_cli_satisfies_dependency
 test_unknown_backend_reports_invalid_configuration
 test_json_backends_require_jq_not_tmux
+test_perl_json_pp_is_required
 test_treehouse_lease_check_follows_resolved_backend
 test_fleet_sync_timeout_scales_with_origin_backed_project_count
 test_fleet_sync_timeout_floor_preserves_small_fleets
