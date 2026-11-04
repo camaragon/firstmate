@@ -16,6 +16,8 @@
 # reread unless a previous reread is still owed. For local routes only,
 # data/captain-shared.md-only updates send no new reread pointer.
 # Warnings-only skips exit 0; real propagation or reread-send errors exit non-zero.
+# An FM_STATE_OVERRIDE that is not FM_HOME's own state directory exits 2 before
+# any discovery or write (see the refusal below the overrides).
 set -u
 
 usage() {
@@ -41,7 +43,10 @@ incomplete meta records.
 Environment overrides follow the rest of firstmate:
   FM_HOME            active firstmate home
   FM_ROOT_OVERRIDE  firstmate repo root
-  FM_STATE_OVERRIDE state dir
+  FM_STATE_OVERRIDE state dir; must be FM_HOME's own state directory, because
+                    the live homes found there receive FM_HOME's material and
+                    lose whatever it lacks, so any other pairing is refused
+                    (exit 2) before discovery
   FM_DATA_OVERRIDE  data dir
   FM_CONFIG_OVERRIDE config dir
 EOF
@@ -67,6 +72,26 @@ CONFIG="${FM_CONFIG_OVERRIDE:-$FM_HOME/config}"
 STATE="${FM_STATE_OVERRIDE:-$FM_HOME/state}"
 DATA="${FM_DATA_OVERRIDE:-$FM_HOME/data}"
 SECONDMATES_MD="$DATA/secondmates.md"
+
+# The live homes this push writes to are discovered from STATE, while the
+# material it writes comes from FM_HOME, and propagation is primary-
+# authoritative: every item the source lacks is removed downstream. A state
+# directory that belongs to a different home than FM_HOME therefore pushes one
+# home's configuration into another home's secondmates, which has no
+# legitimate caller and is exactly how an FM_STATE_OVERRIDE inherited from an
+# operator pane turns a test fixture into a wipe of live secondmate homes.
+# Refuse before any discovery or write, naming both, rather than warn: a
+# warning in a test run is a line nobody reads.
+same_directory() {  # <a> <b>
+  local a b
+  a=$(cd -- "$1" 2>/dev/null && pwd -P) || a=${1%/}
+  b=$(cd -- "$2" 2>/dev/null && pwd -P) || b=${2%/}
+  [ "$a" = "$b" ]
+}
+if [ -n "${FM_STATE_OVERRIDE:-}" ] && ! same_directory "$FM_STATE_OVERRIDE" "$FM_HOME/state"; then
+  echo "config-push: refusing to push $FM_HOME into the secondmates recorded under $FM_STATE_OVERRIDE, which is not that home's state directory; unset FM_STATE_OVERRIDE or point FM_HOME at the home it belongs to" >&2
+  exit 2
+fi
 
 "$SCRIPT_DIR/fm-guard.sh" || true
 

@@ -1992,6 +1992,78 @@ test_config_push_propagates_reports_without_ff_or_nudge() {
   pass "B12 config-push propagates via shared live discovery, reports items, rereads on change only, and does not fast-forward"
 }
 
+# config-push discovers the live homes it writes to from FM_STATE_OVERRIDE and
+# takes the material it writes from FM_HOME, and the push is primary-
+# authoritative. A state directory leaked from another home (an operator pane
+# under fm-startup-network exports one into every descendant) therefore makes
+# a fixture home wipe real secondmates. The pairing must refuse before any
+# discovery or write; the consistent pairing must still push, including the
+# removals, or the refusal case could pass on an inert fixture.
+test_config_push_refuses_a_state_dir_from_another_home() {
+  local w c1 fixture out err status victim_dispatch victim_budget victim_shared log
+  w=$(new_world config-push-foreign-state)
+  c1=$(git -C "$w/main" rev-parse HEAD)
+  add_sm_worktree "$w" victim "$c1"
+  mkdir -p "$w/victim/config" "$w/victim/data"
+  victim_dispatch='{"default":{"harness":"codex","model":"gpt-5","effort":"high"}}'
+  victim_budget=7500
+  victim_shared=$(shared_captain_header_for_tests; printf '\nPrefers terse replies.\n')
+  printf '%s\n' "$victim_dispatch" > "$w/victim/config/crew-dispatch.json"
+  printf '%s\n' "$victim_budget" > "$w/victim/config/startup-memory-budget"
+  printf '%s\n' "$victim_shared" > "$w/victim/data/captain-shared.md"
+  record_live_watcher_fixture "$w/home"
+  # The live primary carries the same three items, so a correct push leaves
+  # the victim exactly as it is apart from the fixture-only item below.
+  printf '%s\n' "$victim_dispatch" > "$w/home/config/crew-dispatch.json"
+  printf '%s\n' "$victim_budget" > "$w/home/config/startup-memory-budget"
+  printf '%s\n' "$victim_shared" > "$w/home/data/captain-shared.md"
+
+  # A fixture home holding only config/crew-harness, run with the live home's
+  # state directory leaked in: the pairing fm-startup-network's exports produce
+  # when a suite runs from a worker pane.
+  fixture="$w/fixture"
+  mkdir -p "$fixture/config" "$fixture/state" "$fixture/data"
+  printf 'codex\n' > "$fixture/config/crew-harness"
+  err="$w/foreign-state.err"
+  out=$(PATH="$(make_fake_toolchain "$w"):$BASE_PATH" \
+    FM_HOME="$fixture" FM_ROOT_OVERRIDE="$w/main" FM_STATE_OVERRIDE="$w/home/state" FM_SEND_SETTLE=0 \
+    "$ROOT/bin/fm-config-push.sh" 2>"$err"); status=$?
+  expect_code 2 "$status" "a state directory from another home must be refused"
+  assert_contains "$(cat "$err")" "refusing to push $fixture" \
+    "the refusal must name the home whose material would have been pushed"
+  assert_contains "$(cat "$err")" "$w/home/state" \
+    "the refusal must name the leaked state directory"
+  assert_not_contains "$out" "live secondmate homes" \
+    "a refused push must not start discovery"
+  [ "$(cat "$w/victim/config/crew-dispatch.json")" = "$victim_dispatch" ] \
+    || fail "a refused push changed the victim's crew-dispatch.json"
+  [ "$(cat "$w/victim/config/startup-memory-budget")" = "$victim_budget" ] \
+    || fail "a refused push changed the victim's startup-memory-budget"
+  [ "$(cat "$w/victim/data/captain-shared.md")" = "$victim_shared" ] \
+    || fail "a refused push changed the victim's captain-shared.md"
+  [ ! -e "$w/victim/config/crew-harness" ] \
+    || fail "a refused push still wrote the fixture's crew-harness into the victim"
+
+  # The same state directory named by its own home is the ordinary call, and
+  # it pushes: a primary-only item lands and a victim-only item is removed.
+  printf 'pi\n' > "$w/home/config/crew-harness"
+  printf 'tmux\n' > "$w/victim/config/backend"
+  log="$w/foreign-state-consistent.tmux.log"
+  out=$(PATH="$(make_fake_toolchain "$w"):$BASE_PATH" \
+    FM_HOME="$w/home" FM_ROOT_OVERRIDE="$w/main" FM_STATE_OVERRIDE="$w/home/state" \
+    FM_SEND_SETTLE=0 FM_FAKE_TMUX_LOG="$log" \
+    "$ROOT/bin/fm-config-push.sh" 2>"$err"); status=$?
+  expect_code 0 "$status" "the home's own state directory must still push: $(cat "$err")"
+  assert_contains "$out" "crew-harness: pushed" "the consistent pairing did not push the primary's crew-harness"
+  [ "$(cat "$w/victim/config/crew-harness")" = pi ] \
+    || fail "the consistent pairing did not write the primary's crew-harness"
+  [ ! -e "$w/victim/config/backend" ] \
+    || fail "the consistent pairing left a victim-only item the primary lacks"
+  [ "$(cat "$w/victim/config/crew-dispatch.json")" = "$victim_dispatch" ] \
+    || fail "the consistent pairing changed an item both homes hold identically"
+  pass "config-push refuses a state directory from another home and still pushes its own"
+}
+
 test_config_push_reports_skips_dirty_and_invalid_home() {
   local w head out err status stale_real dirty_real bad_home err_text tmp
   w=$(new_world config-push-warnings)
@@ -3001,6 +3073,7 @@ test_bootstrap_sweep_surfaces_config_propagation_failure
 test_bootstrap_rereads_after_partial_propagation
 test_config_push_propagates_reports_without_ff_or_nudge
 test_config_push_reports_skips_dirty_and_invalid_home
+test_config_push_refuses_a_state_dir_from_another_home
 test_config_push_exits_nonzero_on_copy_error
 test_config_push_rereads_after_partial_propagation
 test_config_reread_per_home_changed_sets_and_exact_bytes
