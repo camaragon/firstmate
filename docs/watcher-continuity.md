@@ -258,7 +258,7 @@ An acknowledgement carries two separable facts:
 - Only retiring the episode is bound to `--recovery-generation`.
 
 A generation mismatch therefore does not block consumption of rows through that sequence.
-It is a non-fatal result that names its own remedy: re-drain, then acknowledge the newer episode.
+It is a non-fatal result that says what it did and did not do: it names the generation that was passed and the live one, reports the rows consumed, states that the episode was left open rather than retired, and names its own remedy: re-drain, then acknowledge the newer episode.
 
 The acknowledgement retires the marker only when no rows remain after sequence-bound consumption.
 A concurrently appended wake has a higher sequence, remains queued, and keeps the episode pending for presentation.

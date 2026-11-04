@@ -2314,6 +2314,14 @@ test_stale_recovery_generation_cannot_touch_a_newer_episode() {
     || ! grep -F 're-run' "$dir/stale-ack.err" >/dev/null; then
     fail "a stale acknowledgement did not name its own remedy: $(cat "$dir/stale-ack.err")"
   fi
+  # The generation guards only episode retirement, and the result must say so
+  # in its own terms: the generation passed, the live one, and that the
+  # episode stayed open - never a bare "newer work is pending" note an agent
+  # could read as routine after mistyping the generation.
+  grep -F -- "--recovery-generation $generation is not the live recovery generation (${newer_marker##*:})" "$dir/stale-ack.err" >/dev/null \
+    || fail "a stale acknowledgement did not name the passed and live generations: $(cat "$dir/stale-ack.err")"
+  grep -F 'left open, not retired' "$dir/stale-ack.err" >/dev/null \
+    || fail "a stale acknowledgement did not say the episode was left open: $(cat "$dir/stale-ack.err")"
   [ "$(cat "$state/.watcher-down")" = "$newer_marker" ] \
     || fail "a stale acknowledgement retired the newer recovery episode"
   grep "$(printf '\tcheck\tfourth\t')" "$state/.wake-queue" >/dev/null \

@@ -940,7 +940,11 @@ if [ -n "$ACK_THROUGH" ]; then
     RECOVERY_ACK_STATUS=$?
     case "$RECOVERY_ACK_STATUS" in
       0) ;;
-      3) RECOVERY_ACK_MOVED=true ;;
+      3)
+        RECOVERY_ACK_MOVED=true
+        fm_recovery_marker_snapshot "$RECOVERY_MARKER" || exit 1
+        RECOVERY_MARKER_TOKEN=$FM_RECOVERY_MARKER_TOKEN
+        ;;
       *)
         echo "wake drain: recovery episode could not be retired safely; re-run bin/fm-wake-drain.sh and use the new WAKE_ACK_REQUIRED command" >&2
         exit 1
@@ -987,8 +991,15 @@ if [ -n "$ACK_THROUGH" ]; then
         ;;
     esac
   elif [ "$RECOVERY_ACK_MOVED" = true ]; then
-    printf 'wake drain: acknowledged wakes through %s (%s row(s) consumed), but a newer recovery episode is pending; re-run bin/fm-wake-drain.sh and use the new WAKE_ACK_REQUIRED command\n' \
-      "$ACK_THROUGH" "$ACK_REMOVED" >&2
+    # The sequence alone owns row consumption and the generation alone owns
+    # retiring the episode (docs/watcher-continuity.md "What an
+    # acknowledgement retires"), so a mismatch is not a refusal. Say exactly
+    # that: which generation was passed, which one is live, that the rows went
+    # and the episode did not, so a mistyped generation is never read as a
+    # routine "newer work arrived" note, and a genuine newer episode is never
+    # dismissed as a typo.
+    printf 'wake drain: acknowledged wakes through %s (%s row(s) consumed), but --recovery-generation %s is not the live recovery generation (%s), so that recovery episode was left open, not retired; re-run bin/fm-wake-drain.sh and use the new WAKE_ACK_REQUIRED command\n' \
+      "$ACK_THROUGH" "$ACK_REMOVED" "$ACK_GENERATION" "${RECOVERY_MARKER_TOKEN##*:}" >&2
   fi
   exit 0
 fi
