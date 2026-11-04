@@ -205,6 +205,10 @@
 # leased home releases its durable treehouse lease so the pool slot is freed,
 # never left leased forever. If the treehouse return fails, teardown leaves the
 # leased home and state in place instead of hiding a still-held lease.
+# A task branch git cannot delete is retained and named, with its head and git's
+# reason, in a warning and in the completion line, so "complete" never implies
+# the branch's commits are gone - least of all under --force, where the report
+# is read as the authorized discard having happened.
 # Usage: fm-teardown.sh <task-id> [--force] [--legacy-record]
 #   --force skips ordinary-task dirty and landed-work checks, skips scout report
 #   checks, and discards secondmate child work for kind=secondmate. Only use it
@@ -3966,19 +3970,41 @@ if [ "$BACKEND" = t3code ]; then
     endpoint_close_refusal "$ID" t3code "$T" 0 || exit 1
   }
 fi
-# Best-effort: drop the local task branch so the shared repo does not accumulate refs.
+# Drop the task's local branch so the shared repository does not accumulate
+# refs. Removal stays best effort - cleanup must not stall on a ref - but it is
+# never silent: a branch that survives is exactly what a reader of "complete"
+# cannot see, and under --force it is the discard the captain authorized being
+# reported as done. A detach or deletion git refuses (a mid-rebase copy, a
+# branch another worktree is standing on, a lock) therefore keeps the branch,
+# is reported with git's own reason, and names the surviving branch and its
+# head on stderr and in the completion line. Nothing is forced past the
+# refusal: a branch another copy holds is not this task's to destroy.
+TEARDOWN_RETAINED_BRANCH=
+TEARDOWN_RETAINED_HEAD=
+teardown_drop_task_branch() {  # <worktree>
+  local wt=$1 branch err head reason
+  branch=$(git -C "$wt" rev-parse --abbrev-ref HEAD 2>/dev/null || echo HEAD)
+  [ "$branch" != HEAD ] || return 0
+  if ! err=$(git -C "$wt" checkout --detach -q 2>&1); then
+    reason="the task copy could not be detached from it"
+  elif ! err=$(git -C "$wt" branch -D -- "$branch" 2>&1 >/dev/null); then
+    reason="git refused to delete it"
+  else
+    return 0
+  fi
+  head=$(git -C "$wt" rev-parse --short --verify --quiet "refs/heads/$branch" 2>/dev/null) || head=unknown
+  err=$(printf '%s\n' "$err" | sed -n '1p')
+  TEARDOWN_RETAINED_BRANCH=$branch
+  TEARDOWN_RETAINED_HEAD=$head
+  echo "warning: task branch $branch retained at $head: $reason${err:+ ($err)}; its commits survive this cleanup, so delete the branch by hand once its work is confirmed unwanted" >&2
+}
 if [ "$BACKEND" = orca ] && [ "$KIND" != secondmate ]; then
   if [ "$ORCA_PATH_MATCH_VERIFIED" != 1 ]; then
     require_orca_worktree_path_match_if_present "$ORCA_WORKTREE_ID" "$WT" || exit 1
     ORCA_PATH_MATCH_VERIFIED=1
   fi
   if [ -d "$WT" ]; then
-    branch=$(git -C "$WT" rev-parse --abbrev-ref HEAD 2>/dev/null || echo HEAD)
-    if [ "$branch" != "HEAD" ]; then
-      if git -C "$WT" checkout --detach -q 2>/dev/null; then
-        git -C "$WT" branch -D "$branch" >/dev/null 2>&1 || true
-      fi
-    fi
+    teardown_drop_task_branch "$WT"
     rm -f "$WT/.claude/settings.local.json" "$WT/.opencode/plugins/fm-turn-end.js" \
       "$WT/.opencode/plugins/fm-busy-state.js" \
       "$WT/.fm-grok-turnend" "$WT/.fm-kimi-turnend"
@@ -3992,12 +4018,7 @@ if [ "$BACKEND" = orca ] && [ "$KIND" != secondmate ]; then
 elif [ "$KIND" != secondmate ] && ! teardown_owns_worktree; then
   :
 elif [ -d "$WT" ] && [ "$KIND" != secondmate ]; then
-  branch=$(git -C "$WT" rev-parse --abbrev-ref HEAD 2>/dev/null || echo HEAD)
-  if [ "$branch" != "HEAD" ]; then
-    if git -C "$WT" checkout --detach -q 2>/dev/null; then
-      git -C "$WT" branch -D "$branch" >/dev/null 2>&1 || true
-    fi
-  fi
+  teardown_drop_task_branch "$WT"
   # Remove our hook and environment files so a reused pool worktree cannot fire
   # signals for a dead task or hand a t3code env block or channel statement to
   # its next holder.
@@ -4197,14 +4218,15 @@ fi
 if [ -d "$STATE" ]; then
   "$SCRIPT_DIR/fm-home-summary-refresh.sh" --best-effort || true
 fi
+retained_note=${TEARDOWN_RETAINED_BRANCH:+; task branch $TEARDOWN_RETAINED_BRANCH retained at $TEARDOWN_RETAINED_HEAD}
 if [ "$TEARDOWN_POOL_SLOT_LOST" = 1 ]; then
-  echo "teardown $ID finished its cleanup and removed its task record, but a returned pool slot did not come back clean (see the warning above); clear those paths so the pool can reuse the slot" >&2
+  echo "teardown $ID finished its cleanup and removed its task record, but a returned pool slot did not come back clean (see the warning above); clear those paths so the pool can reuse the slot$retained_note" >&2
 elif [ "$TEARDOWN_LEGACY_ACCEPTED" = 1 ]; then
-  echo "teardown $ID complete (window ${T:-none}, worktree $WT, legacy record accepted without spawn_gen: endpoint $TEARDOWN_LEGACY_ENDPOINT, incarnation $TEARDOWN_META_SPAWN_GEN)"
+  echo "teardown $ID complete (window ${T:-none}, worktree $WT, legacy record accepted without spawn_gen: endpoint $TEARDOWN_LEGACY_ENDPOINT, incarnation $TEARDOWN_META_SPAWN_GEN$retained_note)"
 elif teardown_owns_worktree; then
-  echo "teardown $ID complete (window ${T:-none}, worktree $WT)"
+  echo "teardown $ID complete (window ${T:-none}, worktree $WT$retained_note)"
 else
-  echo "teardown $ID complete (window ${T:-none}; pool slot $WT left to task $TEARDOWN_SLOT_REASSIGNED_TO${TEARDOWN_SLOT_REASSIGNED_HOME:+ (home $TEARDOWN_SLOT_REASSIGNED_HOME)}, which it was reassigned to)"
+  echo "teardown $ID complete (window ${T:-none}; pool slot $WT left to task $TEARDOWN_SLOT_REASSIGNED_TO${TEARDOWN_SLOT_REASSIGNED_HOME:+ (home $TEARDOWN_SLOT_REASSIGNED_HOME)}, which it was reassigned to$retained_note)"
 fi
 backlog_refresh_reminder
 [ "$TEARDOWN_POOL_SLOT_LOST" = 0 ] || exit "$TEARDOWN_LOST_SLOT_EXIT"

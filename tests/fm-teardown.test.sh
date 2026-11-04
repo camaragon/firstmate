@@ -1886,6 +1886,57 @@ test_forced_secondmate_child_scout_nested_clone_returns_clean() {
   pass "a forced secondmate teardown returns a child scout copy with a nested clone clean"
 }
 
+# A task branch git cannot delete survives cleanup; "complete" must say so, and
+# the refusal must stay visible instead of being swallowed. The branch is held
+# checked out by a second copy, the way another lane's careless claim leaves
+# it, so the deletion git refuses is also one that must never be forced: that
+# copy's work is not this task's to destroy.
+test_forced_teardown_names_a_task_branch_it_could_not_delete() {
+  local case_dir rc=0 head other_lane
+  case_dir=$(make_case retained-branch)
+  write_meta "$case_dir" no-mistakes ship
+  wt_commit "$case_dir" "discarded work"
+  other_lane="$case_dir/other-lane"
+  git -C "$case_dir/project" worktree add -q -f "$other_lane" fm/task-x1
+  head=$(git -C "$case_dir/project" rev-parse --short refs/heads/fm/task-x1)
+
+  run_teardown "$case_dir" --force > "$case_dir/stdout" 2> "$case_dir/stderr" || rc=$?
+
+  expect_code 0 "$rc" "retained-branch: forced teardown should still complete its cleanup"
+  assert_absent "$case_dir/state/task-x1.meta" "retained-branch: teardown kept the task record"
+  assert_grep "warning: task branch fm/task-x1 retained at $head: git refused to delete it" "$case_dir/stderr" \
+    "retained-branch: the surviving branch and its head were not named on stderr"
+  assert_grep "$other_lane" "$case_dir/stderr" \
+    "retained-branch: git's own reason for the refusal was not relayed"
+  assert_grep "teardown task-x1 complete (" "$case_dir/stdout" \
+    "retained-branch: the completion line is missing"
+  assert_grep "; task branch fm/task-x1 retained at $head)" "$case_dir/stdout" \
+    "retained-branch: the completion line does not name the retained branch"
+  git -C "$case_dir/project" show-ref --verify --quiet refs/heads/fm/task-x1 \
+    || fail "retained-branch: the branch another copy holds was destroyed"
+  [ "$(git -C "$other_lane" rev-parse --abbrev-ref HEAD)" = fm/task-x1 ] \
+    || fail "retained-branch: the other copy was moved off its branch"
+  pass "a forced teardown names a task branch it could not delete instead of reporting it gone"
+}
+
+# The ordinary case stays quiet: a deletable branch is removed and nothing is
+# reported retained, so the warning above cannot become routine noise.
+test_teardown_reports_no_retained_branch_when_deletion_succeeds() {
+  local case_dir rc=0
+  case_dir=$(make_case deletable-branch)
+  write_meta "$case_dir" no-mistakes ship
+  land_shippable_commit "$case_dir"
+
+  run_teardown "$case_dir" > "$case_dir/stdout" 2> "$case_dir/stderr" || rc=$?
+
+  expect_code 0 "$rc" "deletable-branch: teardown should succeed"
+  ! git -C "$case_dir/project" show-ref --verify --quiet refs/heads/fm/task-x1 \
+    || fail "deletable-branch: teardown kept a deletable task branch"
+  assert_no_grep "retained at" "$case_dir/stderr" "deletable-branch: a deleted branch was reported retained"
+  assert_no_grep "retained at" "$case_dir/stdout" "deletable-branch: the completion line reported a deleted branch retained"
+  pass "teardown reports nothing retained when the task branch is deleted"
+}
+
 # Return succeeds but leaves no readable worktree behind to verify.
 add_treehouse_that_removes_copy() {
   local case_dir=$1
@@ -6255,6 +6306,8 @@ test_ship_nested_clone_is_refused_and_bytes_stay
 test_dirty_return_warns_which_slot_was_lost
 test_dirty_return_warns_even_when_a_later_step_refuses
 test_forced_secondmate_child_scout_nested_clone_returns_clean
+test_forced_teardown_names_a_task_branch_it_could_not_delete
+test_teardown_reports_no_retained_branch_when_deletion_succeeds
 test_forced_secondmate_dirty_child_return_warns_and_completes
 test_return_that_removes_copy_warns_cannot_verify
 test_scout_ignored_files_survive_scratch_clean
