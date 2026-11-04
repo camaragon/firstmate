@@ -582,6 +582,59 @@ test_launch_preserves_inherited_git_config() {
   pass "launch appends the hooks config while preserving inherited Git credentials in every pane shell, fish included"
 }
 
+# A pane shell may define an `env` function: a logging or filtering wrapper is
+# ordinary in dotfiles. A bare `env` as the launch's leading word would hand the
+# whole worker command to that function, which can keep the harness-identity
+# markers the launch clears or never start the worker at all. Execute the real
+# emitted launch under such a function and ask the worker what reached it.
+test_launch_resolves_env_past_a_shadowing_shell_function() {
+  local rec id=env-shadow out status launch launch_file probe result pane_shell expected
+  rec=$(make_spawn_case "$id" claude "$id")
+  read_case_record "$rec"
+  out=$(run_ship_spawn "$HOME_DIR" "$WT_DIR" "$FAKEBIN_DIR" "$LAUNCH_LOG" "$id" "$PROJ_DIR")
+  status=$?
+  expect_code 0 "$status" "claude spawn for the env-shadow probe should succeed: $out"
+  launch=$(cat "$LAUNCH_LOG")
+  case "$(fm_test_launch_command "$launch")" in
+    "command env "*) ;;
+    *) fail "the launch must resolve its leading env past shell functions: $launch" ;;
+  esac
+  probe="$CASE_DIR/env-probe.log"
+  cat > "$FAKEBIN_DIR/claude" <<SH
+#!/usr/bin/env bash
+printf 'CURSOR_AGENT=%s\nGEMINI_CLI=%s\n' "\${CURSOR_AGENT-unset}" "\${GEMINI_CLI-unset}" > '$probe'
+SH
+  chmod +x "$FAKEBIN_DIR/claude"
+  launch_file="$CASE_DIR/env-shadow-launch.sh"
+  printf '%s\n' "$launch" > "$launch_file"
+  expected=$'CURSOR_AGENT=unset\nGEMINI_CLI=unset'
+  for pane_shell in /bin/sh /bin/bash /bin/zsh; do
+    [ -x "$pane_shell" ] || continue
+    rm -f "$probe"
+    # shellcheck disable=SC2016 # The pane shell defines and resolves the function itself.
+    result=$(isolated_pane_env CURSOR_AGENT=leaked GEMINI_CLI=leaked PATH="$FAKEBIN_DIR:$PATH" \
+      "$pane_shell" -c 'env() { printf "ENV-SHADOWED\n"; return 1; }; . "$1"' _ "$launch_file" 2>&1) \
+      || fail "launch failed under a shadowing env function in $pane_shell: $result"
+    assert_not_contains "$result" ENV-SHADOWED "the launch ran the pane shell's env function in $pane_shell"
+    [ -f "$probe" ] || fail "the worker never started under a shadowing env function in $pane_shell"
+    [ "$(cat "$probe")" = "$expected" ] \
+      || fail "the launch left harness-identity markers in place in $pane_shell: $(cat "$probe")"
+  done
+  # fish resolves `command env` the same way; without fish the staged launch
+  # text above already proved the leading word.
+  if command -v fish >/dev/null 2>&1; then
+    rm -f "$probe"
+    result=$(isolated_pane_env CURSOR_AGENT=leaked GEMINI_CLI=leaked PATH="$FAKEBIN_DIR:$PATH" \
+      fish -c "function env; printf 'ENV-SHADOWED\n'; return 1; end; source '$launch_file'" 2>&1) \
+      || fail "launch failed under a shadowing env function in fish: $result"
+    assert_not_contains "$result" ENV-SHADOWED "the launch ran fish's env function"
+    [ -f "$probe" ] || fail "the worker never started under a shadowing env function in fish"
+    [ "$(cat "$probe")" = "$expected" ] \
+      || fail "the launch left harness-identity markers in place in fish: $(cat "$probe")"
+  fi
+  pass "a pane shell's env function cannot capture the worker launch or keep its markers"
+}
+
 test_active_dispatch_profile_allows_raw_launch_command() {
   local rec id out status launch
   id=profile-raw-z15
@@ -1837,7 +1890,7 @@ test_claude_forwards_firstmate_config_dir_when_set() {
   status=$?
   expect_code 0 "$status" "claude spawn with CLAUDE_CONFIG_DIR set should succeed"
   launch=$(cat "$LAUNCH_LOG")
-  assert_contains "$launch" "CLAUDE_CONFIG_DIR='$CASE_DIR/claude-work' env -u CURSOR_AGENT -u CURSOR_INVOKED_AS -u GEMINI_CLI CLAUDE_CODE_ENABLE_PROMPT_SUGGESTION=false CLAUDE_CODE_SEND_FEEDBACK=0 claude --dangerously-skip-permissions $(claude_worker_add_dirs "$HOME_DIR" "$id")--settings '{\"feedbackDrafts\":\"off\",\"attribution\":{\"commit\":\"\",\"pr\":\"\",\"sessionUrl\":false}}'" \
+  assert_contains "$launch" "CLAUDE_CONFIG_DIR='$CASE_DIR/claude-work' command env -u CURSOR_AGENT -u CURSOR_INVOKED_AS -u GEMINI_CLI CLAUDE_CODE_ENABLE_PROMPT_SUGGESTION=false CLAUDE_CODE_SEND_FEEDBACK=0 claude --dangerously-skip-permissions $(claude_worker_add_dirs "$HOME_DIR" "$id")--settings '{\"feedbackDrafts\":\"off\",\"attribution\":{\"commit\":\"\",\"pr\":\"\",\"sessionUrl\":false}}'" \
     "claude launch did not forward firstmate's CLAUDE_CONFIG_DIR to the crewmate pane"
   pass "claude forwards firstmate's CLAUDE_CONFIG_DIR so the crewmate uses the same credential store"
 }
@@ -2451,7 +2504,7 @@ claude_expected_launch() {  # <launch> <home> <id> <permission-flag>
   [ "$(printf '%s' "$doorbell" | "$ROOT/bin/fm-operational-input.sh" doorbell-kind)" = launch-brief ] \
     || doorbell="not a launch-brief doorbell"
   quoted="'$(printf '%s' "$doorbell" | sed "s/'/'\\\\''/g")'"
-  printf '%s' "export COMPACT_ADVISER_DISABLE=1; $(task_inbox_export "$2" "$3")$(fm_test_launch_git_prefix "$1")env -u CURSOR_AGENT -u CURSOR_INVOKED_AS -u GEMINI_CLI CLAUDE_CODE_ENABLE_PROMPT_SUGGESTION=false CLAUDE_CODE_SEND_FEEDBACK=0 claude $4 $(claude_worker_add_dirs "$2" "$3")--settings '{\"feedbackDrafts\":\"off\",\"attribution\":{\"commit\":\"\",\"pr\":\"\",\"sessionUrl\":false}}' $CLAUDE_CONTROL_CHANNEL_FLAG $quoted"
+  printf '%s' "export COMPACT_ADVISER_DISABLE=1; $(task_inbox_export "$2" "$3")$(fm_test_launch_git_prefix "$1")command env -u CURSOR_AGENT -u CURSOR_INVOKED_AS -u GEMINI_CLI CLAUDE_CODE_ENABLE_PROMPT_SUGGESTION=false CLAUDE_CODE_SEND_FEEDBACK=0 claude $4 $(claude_worker_add_dirs "$2" "$3")--settings '{\"feedbackDrafts\":\"off\",\"attribution\":{\"commit\":\"\",\"pr\":\"\",\"sessionUrl\":false}}' $CLAUDE_CONTROL_CHANNEL_FLAG $quoted"
 }
 
 test_claude_permission_mode_absent_defaults_to_bypass() {
@@ -2714,6 +2767,7 @@ test_codex_permission_modes
 test_codex_permission_invalid_refuses_before_mutation
 test_codex_permission_does_not_change_other_harnesses
 test_launch_preserves_inherited_git_config
+test_launch_resolves_env_past_a_shadowing_shell_function
 test_worker_launch_delivers_role_scope
 test_no_profile_keeps_claude_profile_defaults
 test_claude_launch_brief_publishes_record_doorbell

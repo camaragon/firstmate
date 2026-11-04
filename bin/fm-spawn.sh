@@ -400,6 +400,8 @@
 #   prevents equal task ids in different Firstmate homes from sharing a file.
 #   Spawn refuses an unsafe pre-existing task temp root or launch namespace, and
 #   task teardown removes only the current home's launch namespace.
+#   A launch whose leading command word is `env` spells it `command env`, so a
+#   pane shell that defines an `env` function still runs the utility.
 # Launch environment (config/launch-env-allowlist):
 #   Absent means unchanged ambient inheritance. A present readable regular file
 #   opts every supported command-line launch (ship, scout, secondmate, raw
@@ -2957,7 +2959,7 @@ launch_template() {
   # session_stop continuation. The busy extension is the exception: it lives
   # outside the home, so discovery never sees it, and -e is the only load.
   omp)
-    printf '%s' 'env -u CLAUDECODE -u PI_CODING_AGENT -u GROK_AGENT -u FM_PI_HARNESS -u GEMINI_CLI -u CURSOR_AGENT -u CURSOR_INVOKED_AS FM_OMP_HARNESS=omp OMP_SKIP_SETUP=1 __OMPBIN____OMPPROFILE__ --config __OMPWORKERCFG__ --auto-approve --cwd __WORKTREE__ __MODELFLAG____EFFORTFLAG__-e __OMPEXT__ "$(__OPINPUT__ encode launch-brief < __BRIEF__)"'
+    printf '%s' 'command env -u CLAUDECODE -u PI_CODING_AGENT -u GROK_AGENT -u FM_PI_HARNESS -u GEMINI_CLI -u CURSOR_AGENT -u CURSOR_INVOKED_AS FM_OMP_HARNESS=omp OMP_SKIP_SETUP=1 __OMPBIN____OMPPROFILE__ --config __OMPWORKERCFG__ --auto-approve --cwd __WORKTREE__ __MODELFLAG____EFFORTFLAG__-e __OMPEXT__ "$(__OPINPUT__ encode launch-brief < __BRIEF__)"'
     ;;
   # agy (Antigravity CLI): --prompt-interactive "<brief>" starts the supervised
   # interactive session and auto-submits it, so the brief rides the launch
@@ -3021,7 +3023,7 @@ launch_template() {
   # inherited CLAUDECODE cannot outrank cursor's own marker in a process that
   # only reads the environment. Cursor exposes no effort flag, so the shared
   # effort axis is deliberately omitted and stays in task metadata only.
-  cursor) printf '%s' 'env -u CLAUDECODE -u PI_CODING_AGENT -u GROK_AGENT -u FM_PI_HARNESS -u GEMINI_CLI -u CURSOR_INVOKED_AS __CURSORBIN__ --trust --yolo __MODELFLAG__--workspace __WORKTREE__ "$(__OPINPUT__ encode launch-brief < __BRIEF__)"' ;;
+  cursor) printf '%s' 'command env -u CLAUDECODE -u PI_CODING_AGENT -u GROK_AGENT -u FM_PI_HARNESS -u GEMINI_CLI -u CURSOR_INVOKED_AS __CURSORBIN__ --trust --yolo __MODELFLAG__--workspace __WORKTREE__ "$(__OPINPUT__ encode launch-brief < __BRIEF__)"' ;;
   # gemini (Google Gemini CLI): a positional query starts the supervised
   # interactive session and auto-submits it, so the brief rides the launch
   # command exactly as it does for claude and grok (verified: a multi-line
@@ -3090,7 +3092,7 @@ launch_template() {
   # effort inside the model reference as `<model>(<effort>)`, so the effort
   # axis rides `__MODELFLAG__` after mapping to the nearest compatible
   # level in the installed model's selectable set.
-  polytoken) printf '%s' 'for _fmv in $(env | cut -d= -f1 | grep -E '\''^(ORCA_|FM_)'\''); do case $_fmv in FM_TASK_ID|FM_TASK_INBOX|FM_ZELLIJ_SESSION) ;; *) unset $_fmv ;; esac; done; env -u CLAUDECODE -u PI_CODING_AGENT -u GROK_AGENT -u FM_PI_HARNESS -u FM_OMP_HARNESS -u GEMINI_CLI -u CURSOR_AGENT -u CURSOR_INVOKED_AS -u ATLASSIAN_AGENT_TYPE -u ROVODEV_CLI -u AGENT __POLYTOKENBIN__ --config-dir __POLYTOKENCONFIG__ new --sessions-dir __POLYTOKENSESSIONS__ --facet firstmate-worker --facets-dir __POLYTOKENFACETS__ __MODELFLAG__--prompt "$(__OPINPUT__ encode launch-brief < __BRIEF__)"' ;;
+  polytoken) printf '%s' 'for _fmv in $(env | cut -d= -f1 | grep -E '\''^(ORCA_|FM_)'\''); do case $_fmv in FM_TASK_ID|FM_TASK_INBOX|FM_ZELLIJ_SESSION) ;; *) unset $_fmv ;; esac; done; command env -u CLAUDECODE -u PI_CODING_AGENT -u GROK_AGENT -u FM_PI_HARNESS -u FM_OMP_HARNESS -u GEMINI_CLI -u CURSOR_AGENT -u CURSOR_INVOKED_AS -u ATLASSIAN_AGENT_TYPE -u ROVODEV_CLI -u AGENT __POLYTOKENBIN__ --config-dir __POLYTOKENCONFIG__ new --sessions-dir __POLYTOKENSESSIONS__ --facet firstmate-worker --facets-dir __POLYTOKENFACETS__ __MODELFLAG__--prompt "$(__OPINPUT__ encode launch-brief < __BRIEF__)"' ;;
   # Command Code receives the typed launch envelope after -- as its initial
   # message. --yolo bypasses permission prompts, --trust skips the folder-trust
   # prompt of a fresh worktree, and --skip-onboarding skips taste onboarding.
@@ -7541,9 +7543,18 @@ case "$LAUNCH" in
   LAUNCH=${LAUNCH//__CLAUDEADDDIRS__/$CLAUDE_ADD_DIRS}
   ;;
 esac
+# `env` is the first command word of every launch that clears inherited
+# harness-identity markers, and the pane shell resolves that word itself. An
+# interactive shell may define an `env` function (a wrapper that logs, filters,
+# or re-exports), which would receive the whole launch instead of the utility
+# and could leave the markers in place or never start the worker. POSIX
+# `command` skips shell functions, fish honors it too, and an assignment or
+# `export` prefix ahead of it stays one simple command, so every launch whose
+# leading word is `env` spells it `command env`. Only the leading word needs
+# it: a nested `env` further along is an argument the utility execs directly.
 case "$HARNESS" in
 claude | codex | opencode | pi | pi-signed | grok | kimi | gemini | muse | rovo | agy | devin | commandcode | cortex | kiro | hermes)
-  LAUNCH="env -u CURSOR_AGENT -u CURSOR_INVOKED_AS -u GEMINI_CLI $LAUNCH"
+  LAUNCH="command env -u CURSOR_AGENT -u CURSOR_INVOKED_AS -u GEMINI_CLI $LAUNCH"
   ;;
 esac
 # Crewmate panes are created by a long-lived tmux/herdr daemon that does not
@@ -7559,10 +7570,13 @@ esac
 if [ -n "$WORKER_ACCOUNT" ]; then
   case "$HARNESS" in
   claude)
+    # The shed `env` becomes the leading word, so it takes the `command`
+    # resolution and the harness-identity `env` behind it drops back to a
+    # plain argument.
     if [ -n "$WORKER_ACCOUNT_ROOT" ]; then
-      LAUNCH="$(fm_worker_account_claude_shed) CLAUDE_CONFIG_DIR=$(shell_quote "$WORKER_ACCOUNT_ROOT") $LAUNCH"
+      LAUNCH="command $(fm_worker_account_claude_shed) CLAUDE_CONFIG_DIR=$(shell_quote "$WORKER_ACCOUNT_ROOT") ${LAUNCH#command }"
     else
-      LAUNCH="$(fm_worker_account_claude_shed) -u CLAUDE_CONFIG_DIR $LAUNCH"
+      LAUNCH="command $(fm_worker_account_claude_shed) -u CLAUDE_CONFIG_DIR ${LAUNCH#command }"
     fi
     ;;
   pi | pi-signed)
